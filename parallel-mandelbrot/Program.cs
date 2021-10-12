@@ -12,8 +12,14 @@ namespace parallel_mandelbrot
         {
             AsyncHelper asyncHelper = new AsyncHelper();
 
-            Bitmap bitmap = await asyncHelper.GenerateFractal();
-            bitmap.Save("test.png", ImageFormat.Png);
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+
+            await asyncHelper.GenerateThreads();
+
+            watch.Stop();
+            var elapsedMs = watch.ElapsedMilliseconds;
+
+            //bitmap.Save("test.png", ImageFormat.Png);
             Console.ReadLine();
         }
     }
