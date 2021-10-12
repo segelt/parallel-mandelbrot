@@ -13,13 +13,13 @@ namespace parallel_mandelbrot
     {
         #region Constants
         
-        static int MAX_ITER = 250;
-        static double X_MAX = 1920;
-        static double Y_MAX = 1080;
-        static double X_LOW = -2.5;
-        static double X_HIGH = 1.0555555;
-        static double Y_LOW = -1;
-        static double Y_HIGH = 1;
+        static int max_iter = 250;
+        static double width = 1920;
+        static double height = 1080;
+        static double max_valx = 2.5;
+        static double min_valx = -1 * max_valx;
+        static double max_valy = 2.5;
+        static double min_valy = -1 * max_valy;
 
         #endregion
 
@@ -28,12 +28,12 @@ namespace parallel_mandelbrot
             return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
         }
 
-        bool IsFractal(Complex c)
+        bool IsFractal_NaiveImplementation(Complex c)
         {
             Complex z = Complex.Zero;
 
             int n = 0;
-            while (n < MAX_ITER)
+            while (n < max_iter)
             {
                 z = Complex.Add(Complex.Multiply(z, z), c);
                 if (Complex.Abs(z) > 4) break;
@@ -41,6 +41,34 @@ namespace parallel_mandelbrot
                 n++;
             }
             return n > 20;
+        }
+
+        bool IsFractal_diff(int x, int y)
+        {
+            double x_mapped = interpolate(x, 0, width, min_valx, max_valx);
+            double y_mapped = interpolate(y, 0, height, min_valy, max_valy);
+
+            double orig_x = x_mapped;
+            double orig_y = y_mapped;
+            int n = 0;
+
+            while (n < max_iter)
+            {
+                var real = x_mapped * x_mapped - y_mapped * y_mapped;
+                var imaginary = 2* x_mapped * y_mapped;
+
+                x_mapped = real * real + orig_x;
+                y_mapped = imaginary * imaginary + orig_y;
+
+                if(x_mapped * x_mapped + y_mapped * y_mapped > 4)
+                {
+                    return false;
+                }
+
+                n++;
+            }
+
+            return true;
 
         }
 
@@ -52,12 +80,14 @@ namespace parallel_mandelbrot
             {
                 for(int i = xlow; i < xhigh; i++)
                 {
-                    double x_interpolate = interpolate(i, 0, X_MAX, X_LOW, X_HIGH);
-                    double y_interpolate = interpolate(j, 0, Y_MAX, Y_LOW, Y_HIGH);
+                    //double x_interpolate = interpolate(i, 0, width, min_valx, max_valx);
+                    //double y_interpolate = interpolate(j, 0, height, min_valy, max_valy);
 
-                    Complex complex = new Complex(x_interpolate, y_interpolate);
+                    //Complex complex = new Complex(x_interpolate, y_interpolate);
 
-                    bool result = IsFractal(complex);
+                    //bool result = IsFractal_NaiveImplementation(complex);
+
+                    bool result = IsFractal_diff(i, j);
                 }
             }
         }
@@ -66,9 +96,9 @@ namespace parallel_mandelbrot
         {
             await Task.Run(() =>
             {
-                Console.WriteLine("running");
+                //Console.WriteLine("running");
                 GenerateFractalsPartitioned(xlow, xhigh, ylow, yhigh);
-                Console.WriteLine("done");
+                //Console.WriteLine("done");
             });
         }
 
@@ -79,10 +109,8 @@ namespace parallel_mandelbrot
                 bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             int bytesPerPixel = 3;
 
-            var partitions_width = partitions((int)X_MAX, 6);
-            var partitions_height = partitions((int)Y_MAX, 10);
-
-            //GenerateFractalsPartitioned(widthMid + 1, (int)X_MAX - 1, heightMid + 1, (int)Y_MAX - 1);
+            var partitions_width = partitions((int)width, 6);
+            var partitions_height = partitions((int)height, 10);
 
             IList<Task> tasks = new List<Task>();
 

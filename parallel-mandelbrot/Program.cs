@@ -20,6 +20,7 @@ namespace parallel_mandelbrot
             var elapsedMs = watch.ElapsedMilliseconds;
 
             //bitmap.Save("test.png", ImageFormat.Png);
+            Console.WriteLine(elapsedMs);
             Console.ReadLine();
         }
     }
