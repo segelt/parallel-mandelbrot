@@ -6,6 +6,8 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Media.Imaging;
+using System.Windows;
 
 namespace parallel_mandelbrot
 {
@@ -14,20 +16,14 @@ namespace parallel_mandelbrot
         #region Constants
         
         static int max_iter = 250;
-        static double width = 1920;
-        static double height = 1080;
+        static int width = 1920;
+        static int height = 1080;
         static double max_valx = 2.5;
         static double min_valx = -1 * max_valx;
         static double max_valy = 2.5;
         static double min_valy = -1 * max_valy;
 
         #endregion
-
-        double interpolate(double x, double x1, double x2, double y1, double y2)
-        {
-            return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
-        }
-
         bool IsFractal_NaiveImplementation(Complex c)
         {
             Complex z = Complex.Zero;
@@ -43,7 +39,12 @@ namespace parallel_mandelbrot
             return n > 20;
         }
 
-        bool IsFractal_diff(int x, int y)
+        double interpolate(double x, double x1, double x2, double y1, double y2)
+        {
+            return y1 + ((x - x1) * (y2 - y1)) / (x2 - x1);
+        }
+
+        byte[] IsFractal_diff(int x, int y)
         {
             double x_mapped = interpolate(x, 0, width, min_valx, max_valx);
             double y_mapped = interpolate(y, 0, height, min_valy, max_valy);
@@ -62,19 +63,29 @@ namespace parallel_mandelbrot
 
                 if(x_mapped * x_mapped + y_mapped * y_mapped > 4)
                 {
-                    return false;
+                    break;
                 }
 
                 n++;
             }
 
-            return true;
+            int pixelValue = (int)interpolate(n, 0, max_iter, 0, 255);
+            if(n == max_iter)
+            {
+                pixelValue = 30;
+            }
+
+            byte byteVal = Convert.ToByte(pixelValue);
+
+            byte[] color_data = { byteVal, byteVal, byteVal };
+
+            return color_data;
 
         }
 
         #region Synchronous
 
-        public void GenerateFractalsPartitioned(int xlow, int xhigh, int ylow, int yhigh)
+        public void GenerateFractalsPartitioned(int xlow, int xhigh, int ylow, int yhigh, byte[,] byteMap)
         {
             for(int j = ylow; j < yhigh; j++)
             {
@@ -87,30 +98,33 @@ namespace parallel_mandelbrot
 
                     //bool result = IsFractal_NaiveImplementation(complex);
 
-                    bool result = IsFractal_diff(i, j);
+                    byte[] result = IsFractal_diff(i, j);
+                    int idx = j * width + i;
+                    lock (byteMap)
+                    {
+                        byteMap[0,idx] = result[0];
+                        byteMap[1,idx] = result[1];
+                        byteMap[2,idx] = result[2];
+                    }
                 }
             }
         }
 
-        public async Task GenerateFractalsTask(int xlow, int xhigh, int ylow, int yhigh)
+        public async Task GenerateFractalsTask(int xlow, int xhigh, int ylow, int yhigh, byte[,] byteMap)
         {
             await Task.Run(() =>
             {
                 //Console.WriteLine("running");
-                GenerateFractalsPartitioned(xlow, xhigh, ylow, yhigh);
+                GenerateFractalsPartitioned(xlow, xhigh, ylow, yhigh, byteMap);
                 //Console.WriteLine("done");
             });
         }
 
         public async Task GenerateThreads()
         {
-            Bitmap bitmap = new Bitmap(1920, 1080);
-            BitmapData imageData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width,
-                bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            int bytesPerPixel = 3;
-
             var partitions_width = partitions((int)width, 6);
             var partitions_height = partitions((int)height, 10);
+            byte[,] byteMap = new byte[width, height];
 
             IList<Task> tasks = new List<Task>();
 
@@ -123,11 +137,16 @@ namespace parallel_mandelbrot
                     int ylow = partitions_height[j];
                     int yhigh = partitions_height[j + 1];
 
-                    tasks.Add(GenerateFractalsTask(xlow, xhigh, ylow, yhigh));
+                    tasks.Add(GenerateFractalsTask(xlow, xhigh, ylow, yhigh, byteMap));
                 }
             }
 
             await Task.WhenAll(tasks);
+
+            Bitmap bitmap = new Bitmap((int)width, (int)height, PixelFormat.Format24bppRgb);
+            BitmapData imageData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width,
+                bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            int bytesPerPixel = 3;
 
             Console.WriteLine("here....");
         }
