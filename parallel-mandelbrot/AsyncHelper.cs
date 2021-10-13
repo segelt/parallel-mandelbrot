@@ -69,10 +69,11 @@ namespace parallel_mandelbrot
                 n++;
             }
 
-            int pixelValue = (int)interpolate(n, 0, max_iter, 0, 255);
+            //int pixelValue = (int)interpolate(n, 0, max_iter, 0, 255);
+            int pixelValue = 0;
             if(n == max_iter)
             {
-                pixelValue = 30;
+                pixelValue = 255;
             }
 
             byte byteVal = Convert.ToByte(pixelValue);
@@ -99,6 +100,7 @@ namespace parallel_mandelbrot
                     //bool result = IsFractal_NaiveImplementation(complex);
 
                     byte[] result = IsFractal_diff(i, j);
+                    //Console.WriteLine($"{j} - {i}");
                     int idx = j * width + i;
                     lock (byteMap)
                     {
@@ -120,11 +122,11 @@ namespace parallel_mandelbrot
             });
         }
 
-        public async Task GenerateThreads()
+        public async Task<byte[,]> GenerateThreads()
         {
             var partitions_width = partitions((int)width, 6);
             var partitions_height = partitions((int)height, 10);
-            byte[,] byteMap = new byte[width, height];
+            byte[,] byteMap = new byte[3, width * height];
 
             IList<Task> tasks = new List<Task>();
 
@@ -144,11 +146,15 @@ namespace parallel_mandelbrot
             await Task.WhenAll(tasks);
 
             Bitmap bitmap = new Bitmap((int)width, (int)height, PixelFormat.Format24bppRgb);
-            BitmapData imageData = bitmap.LockBits(new Rectangle(0, 0, bitmap.Width,
-                bitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            int bytesPerPixel = 3;
+            Rectangle rect = new Rectangle(0, 0, width, height);
+
+            BitmapData imageData = bitmap.LockBits(rect, ImageLockMode.ReadWrite, bitmap.PixelFormat);
+            int padding = imageData.Stride - 3 * width;
+            
 
             Console.WriteLine("here....");
+
+            return byteMap;
         }
 
         public IList<int> partitions(int total, int n)
@@ -177,6 +183,36 @@ namespace parallel_mandelbrot
             return nums;
         }
 
+        public Bitmap BitmapFromByteArray(byte[,] byteMap, int width, int height)
+        {
+            Bitmap bitmap = new Bitmap((int)width, (int)height, PixelFormat.Format24bppRgb);
+            Rectangle rect = new Rectangle(0, 0, width, height);
+
+            BitmapData bmpData = bitmap.LockBits(rect, ImageLockMode.ReadWrite, bitmap.PixelFormat);
+            int padding = bmpData.Stride - 3 * width;
+
+            unsafe
+            {
+                byte* ptr = (byte*)bmpData.Scan0;
+                for(int y = 0; y < height; y++)
+                {
+                    for(int x = 0; x < width; x++)
+                    {
+                        int idx = y * width + x;
+                        ptr[2] = byteMap[0, idx]; //R
+                        ptr[1] = byteMap[1, idx]; //G
+                        ptr[0] = byteMap[2, idx]; //B
+
+                        ptr += 3;
+                    }
+                    ptr += padding; //pad each row
+                }
+            }
+
+            bitmap.UnlockBits(bmpData);
+
+            return bitmap;
+        }
         #endregion
     }
 }

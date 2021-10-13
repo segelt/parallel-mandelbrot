@@ -14,12 +14,14 @@ namespace parallel_mandelbrot
 
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
-            await asyncHelper.GenerateThreads();
+            byte[,] byteMap = await asyncHelper.GenerateThreads();
 
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
 
-            //bitmap.Save("test.png", ImageFormat.Png);
+            Bitmap bitmap = asyncHelper.BitmapFromByteArray(byteMap, 1920, 1080);
+
+            bitmap.Save("test3.png", ImageFormat.Png);
             Console.WriteLine(elapsedMs);
             Console.ReadLine();
         }
