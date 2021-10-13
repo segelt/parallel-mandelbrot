@@ -14,12 +14,23 @@ namespace parallel_mandelbrot
 
             var watch = System.Diagnostics.Stopwatch.StartNew();
 
-            byte[,] byteMap = await asyncHelper.GenerateThreads();
+            ImageGenerationModel inputModel = new ImageGenerationModel
+            {
+                width = 1920,
+                height = 1080,
+                x_ThreadCount = 6,
+                y_ThreadCount = 10,
+                maxIterations = 250,
+                maxZoomX = 3.5,
+                maxZoomY = 3.5
+            };
+
+            byte[,] byteMap = await asyncHelper.PrepareFractalByteMapAsync(inputModel);
 
             watch.Stop();
             var elapsedMs = watch.ElapsedMilliseconds;
 
-            Bitmap bitmap = asyncHelper.BitmapFromByteArray(byteMap, 1920, 1080);
+            Bitmap bitmap = asyncHelper.BitmapFromByteArray(byteMap, inputModel.width, inputModel.height);
 
             bitmap.Save($"test_{DateTime.Now.ToString("ddMMyyyy_hhmmss")}.png", ImageFormat.Png);
             Console.WriteLine(elapsedMs);
