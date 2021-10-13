@@ -21,7 +21,7 @@ namespace parallel_mandelbrot
 
             Bitmap bitmap = asyncHelper.BitmapFromByteArray(byteMap, 1920, 1080);
 
-            bitmap.Save("test3.png", ImageFormat.Png);
+            bitmap.Save($"test_{DateTime.Now.ToString("ddMMyyyy_hhmmss")}.png", ImageFormat.Png);
             Console.WriteLine(elapsedMs);
             Console.ReadLine();
         }

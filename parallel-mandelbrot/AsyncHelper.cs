@@ -18,9 +18,9 @@ namespace parallel_mandelbrot
         static int max_iter = 250;
         static int width = 1920;
         static int height = 1080;
-        static double max_valx = 2.5;
+        static double max_valx = 1.5;
         static double min_valx = -1 * max_valx;
-        static double max_valy = 2.5;
+        static double max_valy = 1.5;
         static double min_valy = -1 * max_valy;
 
         #endregion
@@ -58,10 +58,10 @@ namespace parallel_mandelbrot
                 var real = x_mapped * x_mapped - y_mapped * y_mapped;
                 var imaginary = 2* x_mapped * y_mapped;
 
-                x_mapped = real * real + orig_x;
-                y_mapped = imaginary * imaginary + orig_y;
+                x_mapped = real + orig_x;
+                y_mapped = imaginary + orig_y;
 
-                if(x_mapped * x_mapped + y_mapped * y_mapped > 4)
+                if(x_mapped * x_mapped + y_mapped * y_mapped > 16)
                 {
                     break;
                 }
@@ -69,12 +69,13 @@ namespace parallel_mandelbrot
                 n++;
             }
 
-            //int pixelValue = (int)interpolate(n, 0, max_iter, 0, 255);
-            int pixelValue = 0;
-            if(n == max_iter)
-            {
-                pixelValue = 255;
-            }
+            int pixelValue = (int)interpolate(n, 0, max_iter, 0, 255);
+            //int pixelValue = 0;
+            //if(n == max_iter)
+            //{
+                
+
+            //}
 
             byte byteVal = Convert.ToByte(pixelValue);
 
@@ -100,14 +101,18 @@ namespace parallel_mandelbrot
                     //bool result = IsFractal_NaiveImplementation(complex);
 
                     byte[] result = IsFractal_diff(i, j);
-                    //Console.WriteLine($"{j} - {i}");
+
+                    //if (result)
+                    //{
                     int idx = j * width + i;
                     lock (byteMap)
                     {
-                        byteMap[0,idx] = result[0];
-                        byteMap[1,idx] = result[1];
-                        byteMap[2,idx] = result[2];
+                        byteMap[0, idx] = result[0];
+                        byteMap[1, idx] = result[1];
+                        byteMap[2, idx] = result[2];
                     }
+                    //}
+                    //Console.WriteLine($"{j} - {i}");
                 }
             }
         }
