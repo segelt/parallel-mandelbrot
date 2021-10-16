@@ -7,21 +7,27 @@
         mc:Ignorable="d"
         x:Name="Window1"
         xmlns:viewModel="clr-namespace:guiProject"
-        Title="MainWindow" Height="450" Width="800">
+        Title="Fractal Generation Page" Height="450" Width="800">
     <Window.DataContext>
         <local:MainViewModel x:Name="_model"/>
     </Window.DataContext>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="5*"></RowDefinition>
-            <RowDefinition Height="1*"></RowDefinition>
+            <RowDefinition Height="80"></RowDefinition>
         </Grid.RowDefinitions>
         <!--Main canvas that stores image-->
-        <Canvas Grid.Row="0" x:Name="bitmapCanvas">
+        <!--<Canvas Grid.Row="0" x:Name="bitmapCanvas">
             <Canvas.Background>
-                <SolidColorBrush Color="Black" Opacity="0.1"/>
+                --><!--<SolidColorBrush Color="Black" Opacity="0.1"/>--><!--
+                <Image Width="200" Margin="5">
+                    
+                </Image>
             </Canvas.Background>
-        </Canvas>
+        </Canvas>-->
+        <Image Grid.Row="0" Source="{Binding bitmapSource, UpdateSourceTrigger=PropertyChanged}" x:Name="centerImage" Stretch="Fill">
+        
+        </Image>
 
         <!--Options-->
         <Border Grid.Row="1" BorderBrush="Black" BorderThickness="0 1 0 0">
@@ -36,11 +42,11 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Vertical" VerticalAlignment="Center" Margin="10 0">
                     <StackPanel Orientation="Horizontal">
-                        <Label>max iter</Label>
+                        <TextBlock TextWrapping="WrapWithOverflow" Width="60">Maximum iterations</TextBlock>
                         <TextBlock VerticalAlignment="Center" Text="{Binding inputModel.maxIterations, Mode=TwoWay}"></TextBlock>
                     </StackPanel>
                     <Slider Minimum="200" 
-                            Maximum="300" 
+                            Maximum="1000" 
                             Value="{Binding inputModel.maxIterations, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                             x:Name="sld_maxIter"
                             IsSnapToTickEnabled="True"
@@ -49,10 +55,10 @@
                 </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Vertical" VerticalAlignment="Center" Margin="10 0">
                     <StackPanel Orientation="Horizontal">
-                        <Label>zoomx</Label>
+                        <TextBlock TextWrapping="WrapWithOverflow" Width="60">x-zoom</TextBlock>
                         <TextBlock VerticalAlignment="Center" Text="{Binding inputModel.maxZoomX, Mode=TwoWay}"></TextBlock>
                     </StackPanel>
-                    <Slider Minimum="1" Maximum="10" 
+                    <Slider Minimum="0.1" Maximum="10" 
                             Value="{Binding inputModel.maxZoomX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                             IsSnapToTickEnabled="True"
                             TickFrequency="0.1"
@@ -60,10 +66,10 @@
                 </StackPanel>
                 <StackPanel Grid.Column="2" Orientation="Vertical" VerticalAlignment="Center" Margin="10 0">
                     <StackPanel Orientation="Horizontal">
-                        <Label>zoomy</Label>
+                        <TextBlock TextWrapping="WrapWithOverflow" Width="60">y-zoom</TextBlock>
                         <TextBlock VerticalAlignment="Center" Text="{Binding inputModel.maxZoomY, Mode=TwoWay}"></TextBlock>
                     </StackPanel>
-                    <Slider Minimum="1" Maximum="10" 
+                    <Slider Minimum="0.1" Maximum="10" 
                             Value="{Binding inputModel.maxZoomY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                             IsSnapToTickEnabled="True"
                             TickFrequency="0.1"
@@ -71,7 +77,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="3" Orientation="Vertical" VerticalAlignment="Center" Margin="2 0">
                     <StackPanel Orientation="Horizontal">
-                        <Label>x thread count</Label>
+                        <TextBlock TextWrapping="WrapWithOverflow" Width="80">Vertical slices:</TextBlock>
                         <TextBlock VerticalAlignment="Center" Text="{Binding inputModel.x_ThreadCount, Mode=TwoWay}"></TextBlock>
                     </StackPanel>
                     <Slider Minimum="1" Maximum="10" 
@@ -82,7 +88,7 @@
                 </StackPanel>
                 <StackPanel Grid.Column="4" Orientation="Vertical" VerticalAlignment="Center" Margin="2 0">
                     <StackPanel Orientation="Horizontal">
-                        <Label>ythread count</Label>
+                        <TextBlock TextWrapping="WrapWithOverflow" Width="90">Horizontal slices</TextBlock>
                         <TextBlock VerticalAlignment="Center" Text="{Binding inputModel.y_ThreadCount, Mode=TwoWay}"/>
                     </StackPanel>
                     <Slider Minimum="1" Maximum="10"
@@ -92,7 +98,10 @@
                             x:Name="txt_yThreadCount"></Slider>
                 </StackPanel>
                 <StackPanel Grid.Column="5" Orientation="Horizontal" HorizontalAlignment="Center">
-                    <Button Width="100" Height="30" Command="{Binding ButtonCommand}">Start</Button>
+                    <Button Width="100" Height="30" 
+                            Background="#FF041D32"
+                            Foreground="White"
+                            Command="{Binding ButtonCommand}" FontWeight="Bold">Start</Button>
                 </StackPanel>
             </Grid>
         </Border>
